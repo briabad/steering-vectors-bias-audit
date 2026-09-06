@@ -1,0 +1,30 @@
+# Entorno de ejecución del proyecto (capa 2 — core del proyecto, ver METHODOLOGY.md §1)
+#
+# Instalación: ver scripts/setup_wsl_env.sh
+# torch se instala aparte desde el índice de PyTorch con ruedas CUDA (cu124),
+# porque PyPI sirve la variante CPU-only.
+
+# --- stack de modelos ---
+transformers>=4.46,<5
+accelerate>=1.0
+sentencepiece>=0.2
+huggingface_hub>=0.26
+safetensors>=0.4
+
+# --- datos ---
+datasets>=3.0
+pandas>=2.0
+
+# --- análisis numérico / métricas ---
+numpy>=1.26
+scipy>=1.11
+scikit-learn>=1.4
+
+# --- utilidades ---
+tqdm>=4.66
+matplotlib>=3.8
+
+# --- testing y desarrollo ---
+pytest>=8.0
+pytest-cov>=5.0
+mypy>=1.11

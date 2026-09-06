@@ -1,0 +1,193 @@
+# ============================================
+# Python general
+# ============================================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.dylib
+*.dll
+*.egg-info/
+*.egg
+dist/
+build/
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+*.log
+
+# ============================================
+# Entornos virtuales
+# ============================================
+venv/
+env/
+.venv/
+.env/
+virtualenv/
+pyvenv.cfg
+*.venv
+
+# ============================================
+# IDEs y editores
+# ============================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.bak
+*.orig
+
+# ============================================
+# Jupyter notebooks
+# ============================================
+.ipynb_checkpoints/
+*.ipynb_checkpoints/
+*/.ipynb_checkpoints/
+*.nbconvert.ipynb
+
+# ============================================
+# Datos (¡crucial para reproducibilidad!)
+# ============================================
+datasets/
+*.csv
+*.tsv
+*.json
+*.jsonl
+*.parquet
+*.h5
+*.hdf5
+*.feather
+*.pickle
+*.pkl
+*.pt
+*.pth
+*.bin
+*.npy
+*.npz
+*.db
+*.sqlite
+*.sqlite3
+!data/.gitkeep
+!datasets/.gitkeep
+
+# ============================================
+# Resultados experimentales (¡no versionar!)
+# ============================================
+results/
+outputs/
+experiments/
+logs/
+*.out
+*.err
+*.stdout
+*.stderr
+!results/.gitkeep
+!outputs/.gitkeep
+
+# ============================================
+# Modelos y checkpoints (¡no versionar!)
+# ============================================
+models/
+checkpoints/
+*.ckpt
+*.safetensors
+*.h5
+*.pb
+*.onnx
+!models/.gitkeep
+
+# ============================================
+# Archivos de caché de Hugging Face
+# ============================================
+.cache/
+.cache/huggingface/
+.cache/torch/
+.cache/pip/
+~/.cache/huggingface/
+~/.cache/torch/
+
+# ============================================
+# Variables de entorno y secretos
+# ============================================
+.env
+.secrets
+*.key
+*.pem
+*.crt
+*.cert
+*.jwt
+*.token
+
+# ============================================
+# Documentación temporal
+# ============================================
+*.aux
+*.log
+*.out
+*.toc
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.xdv
+*.bbl
+*.blg
+*.lot
+*.lof
+*.idx
+*.ilg
+*.ind
+*.glg
+*.glo
+*.gls
+*.ist
+
+# ============================================
+# Archivos grandes (típicos en investigación)
+# ============================================
+*.zip
+*.tar
+*.gz
+*.tgz
+*.rar
+*.7z
+*.iso
+*.dmg
+
+# ============================================
+# Específicos de investigación
+# ============================================
+# Actuaciones de modelos (grandes)
+activations/
+hidden_states/
+*.activation
+*.hidden
+
+# Embeddings generados
+embeddings/
+*.emb
+*.embed
+
+# Archivos de pruebas
+test_*.py
+*_test.py
+!test_requirements.txt
+
+# ============================================
+# Archivos del sistema
+# ============================================
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.tmp
+*.temp

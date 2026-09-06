@@ -1,0 +1,62 @@
+schema: spec-driven
+
+context: |
+  Language: Spanish
+  All artifacts must be written in Spanish.
+  Keep OpenSpec structural headings and SHALL/MUST keywords in English.
+
+  ## Qué es este proyecto
+  Workspace de INVESTIGACIÓN en interpretabilidad de modelos de lenguaje, no un
+  backend de producción. El objetivo es generar conocimiento con trazabilidad
+  (ver METHODOLOGY.md), y el código existe para producir mediciones reproducibles.
+
+  Línea de trabajo actual (Q-001): ¿puede una dirección latente detectar y moderar
+  razonamientos sesgados en Qwen 2.5 7B Instruct sin modificar los pesos del modelo?
+  Enfoque: extracción de activaciones, dirección latente por contraste, geometría del
+  flujo de representaciones, y steering por vector en tiempo de inferencia.
+
+  ## Stack y entorno (ver DEC-002)
+  - Ejecución en WSL Ubuntu 22.04. Intérprete canónico: ~/.venvs/niel_landa/bin/python
+  - Python 3.10.12, torch 2.6.0+cu124, transformers 4.57.6, datasets 5.0.1, numpy 2.2.6
+  - GPU: RTX 4090, 24 GiB, bf16 disponible. Un solo dispositivo, sin multi-GPU.
+  - Dependencias declaradas en requirements.txt; torch va por el índice de PyTorch.
+  - NUNCA asumir que el código corre en Windows: las rutas y comandos son de Linux.
+
+  ## Restricciones duras de la investigación
+  - Los pesos del modelo NO se modifican. Nada de fine-tuning, LoRA ni retraining.
+    Toda intervención ocurre sobre activaciones en tiempo de inferencia.
+  - Ningún criterio de éxito puede ser absoluto sin baseline. Ver SOA-001: en HatEval
+    un TF-IDF ya alcanza AUC 0.834 en dev, así que "AUC >= 0.75" no demuestra nada.
+    Toda métrica de separación se reporta CONTRA el baseline léxico y contra la capa 0.
+  - El split de evaluación se declara siempre. `dev` es validación; `test` está
+    contaminado (225 tweets solapan con train) y sufre shift de distribución.
+  - Nada de HARKing: la hipótesis y su criterio cuantitativo se pre-registran en
+    data/experiments/EXP-XXX/hypothesis.md ANTES de ejecutar. Las revisiones se
+    añaden como addendum fechado, sin borrar el texto original.
+  - Toda medición debe ser reproducible: semilla fija, y los parámetros usados se
+    persisten junto a la salida.
+
+  ## Convenciones de código
+  - Type hints obligatorios. Sin dependencias circulares. Ver docs/conventions.md.
+  - El código de aplicación vive en src/, los crudos de experimento en
+    data/experiments/EXP-XXX/output/, nunca al revés.
+  - Los tests de sanidad del workspace están en tests/ (validate_graph.py).
+
+  ## Trazabilidad
+  Cada change debe enlazar por ID a la feature de work/feature_list.json que
+  implementa y a los artefactos de conocimiento que lo motivan (Q-XXX, DEC-XXX,
+  SOA-XXX). Nunca copiar contexto entre archivos: enlazar por ID.
+
+rules:
+  proposal:
+    - Enlazar siempre a la FEAT-NNN de work/feature_list.json y a los Q/DEC/SOA que la motivan.
+    - Declarar explícitamente qué se mide, sobre qué split, y contra qué baseline.
+  tasks:
+    - Cada tarea debe ser verificable por sí sola, con un criterio observable.
+    - Incluir siempre una tarea final que persista los resultados en el output del EXP correspondiente.
+
+operations:
+  apply:
+    guidance:
+      - Ejecutar siempre con el intérprete de DEC-002, nunca con `python` a secas.
+      - Antes de cerrar, correr `python tests/validate_graph.py --strict`.
