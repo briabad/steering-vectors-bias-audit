@@ -1,10 +1,5 @@
 # Direcciones latentes de razonamiento sesgado: hacia guardarraíles auditables sin modificar pesos
 
-> **Estado**: borrador de trabajo. Las secciones marcadas `[PENDIENTE]` esperan
-> resultados en curso. Las cifras sin marca son medidas y reproducibles; cada una cita
-> el script que la produce.
->
-> Borrador original del autor preservado en `work/reporte_borrador_v0.md`.
 
 ---
 
