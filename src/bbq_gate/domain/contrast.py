@@ -2,9 +2,11 @@
 
 Builds the operation-level contrast (P+ = chose a group, P- = abstained) from
 `ConsolidatedItem`s already reconstructed positionally from the raw JSONL
-(`domain.raw_reconstruction`), matches P+/P- 1:1 by (category, template) per
-spec "Contraste emparejado 1:1 por categorÃ­a y plantilla", tracks the residue,
-and isolates the H3 transfer categories as a distinct type (design.md D6).
+(`domain.raw_reconstruction`), matches P+/P- 1:1 by (category, template,
+question_polarity[, question_text]) per spec "Contraste emparejado 1:1 con
+el enunciado controlado" (design.md D2, corrected 2026-09-06 -- see
+`_match_key`), tracks the residue, and isolates the H3 transfer categories
+as a distinct type (design.md D6).
 """
 from __future__ import annotations
 
@@ -66,45 +68,84 @@ class TemplateStats:
     n_residue: int
 
 
+MatchKey = tuple[str, str, "str | None", "str | None"]
+
+
+def _match_key(item: ConsolidatedItem) -> MatchKey:
+    """Grouping key for `match_pairs_by_template` (design.md D2, corrected
+    2026-09-06 after the leak abort -- see `EXP-002/hypothesis.md` Addendum
+    6). The key is (category, template, question_polarity, question_text).
+
+    Including `question_text` unconditionally is NOT an extra restriction
+    beyond the spec's stated key `(categoría, question_index,
+    question_polarity)`: within a (category, template, polarity) group the
+    text is identical for 679 of 686 groups (99.0 %), so adding it to the key
+    is a no-op there. For the remaining 1.0 % it implements the spec's second
+    requirement directly ("el emparejamiento exige además que el enunciado
+    sea idéntico") without a separate conditional path.
+
+    Items whose `question_polarity`/`question_text` were never attached
+    (`None`, e.g. in unit tests exercising the pure pairing logic without a
+    real-text resolution step) simply collapse back to grouping by
+    `(category, template)` alone -- both fields are `None` for every such
+    item, so the key degenerates to the pre-correction behaviour rather than
+    silently mis-grouping them.
+    """
+    return (item.category, item.template, item.question_polarity, item.question_text)
+
+
 def match_pairs_by_template(
     positives: list[ConsolidatedItem],
     negatives: list[ConsolidatedItem],
 ) -> tuple[
     list[tuple[ConsolidatedItem, ConsolidatedItem]],
     list[ConsolidatedItem],
-    dict[tuple[str, str], TemplateStats],
+    dict[MatchKey, TemplateStats],
 ]:
-    """1:1 pairing of P+ with P- sharing the same (category, template).
+    """1:1 pairing of P+ with P- sharing the same (category, template,
+    question_polarity[, question_text]) -- see `_match_key`.
 
-    Spec "Contraste emparejado 1:1 por categorÃ­a y plantilla": every P+ item is
-    matched with at most one P- item of the same category and template;
-    unmatched P- items are discarded; unmatched P+ items become residue.
+    Spec "Contraste emparejado 1:1 con el enunciado controlado": every P+
+    item is matched with at most one P- item of the same category, template
+    AND polarity (and, for the rare group with more than one wording, the
+    same question text); unmatched P- items are discarded; unmatched P+
+    items become residue.
 
-    Pairing within a template is deterministic (by `position`, ascending), not
+    Sharing only (category, template) does NOT suffice: every template in
+    the corpus contains the opposite-worded questions of both polarities, so
+    matching without polarity lets a lexical classifier learn the wording as
+    a near-perfect label proxy (measured: TF-IDF AUC 0.9079 vs. direction AUC
+    0.9174 under the pre-correction key -- `EXP-002/hypothesis.md` Addendum
+    6). This is the corrected key; the pre-correction behaviour is not
+    offered as an option.
+
+    Pairing within a group is deterministic (by `position`, ascending), not
     random: reproducibility (spec "Reproducibilidad") does not require a seed
     here since there is no randomness to seed.
 
     Args:
-        positives: P+ ConsolidatedItems (any templates/categories).
-        negatives: P- ConsolidatedItems (any templates/categories).
+        positives: P+ ConsolidatedItems (any templates/categories), ideally
+            already enriched with `question_polarity`/`question_text` via
+            `application.contrast_builder.attach_polarity_and_text`.
+        negatives: P- ConsolidatedItems, same enrichment expectation.
 
     Returns:
-        (pairs, residue, stats_by_template):
+        (pairs, residue, stats_by_key):
         - pairs: list of (positive, negative) tuples, matched 1:1.
         - residue: leftover, unmatched P+ items.
-        - stats_by_template: per (category, template) bookkeeping, including
-          templates with zero available negatives (spec: "Plantilla sin
-          ningÃºn Ã­tem negativo").
+        - stats_by_key: per `_match_key` bookkeeping, including groups with
+          zero available negatives (spec: "Plantilla sin ningún ítem
+          negativo").
     """
-    neg_by_template: dict[tuple[str, str], list[ConsolidatedItem]] = collections.defaultdict(list)
+    neg_by_template: dict[MatchKey, list[ConsolidatedItem]] = collections.defaultdict(list)
     for neg in negatives:
-        neg_by_template[(neg.category, neg.template)].append(neg)
+        neg_by_template[_match_key(neg)].append(neg)
     for pool in neg_by_template.values():
         pool.sort(key=lambda it: it.position)
 
-    pos_by_template: dict[tuple[str, str], list[ConsolidatedItem]] = collections.defaultdict(list)
+    pos_by_template: dict[MatchKey, list[ConsolidatedItem]] = collections.defaultdict(list)
     for pos in positives:
-        pos_by_template[(pos.category, pos.template)].append(pos)
+        pos_by_template[_match_key(pos)].append(pos)
 
     pairs: list[tuple[ConsolidatedItem, ConsolidatedItem]] = []
     residue: list[ConsolidatedItem] = []
@@ -132,14 +173,15 @@ def match_pairs_by_template(
 
 
 def templates_without_negatives(
-    stats_by_template: dict[tuple[str, str], TemplateStats],
-) -> list[tuple[str, str]]:
-    """Templates whose P+ items had zero P- available (spec: "Plantilla sin
-    ningÃºn Ã­tem negativo"). Task 1.4: `Religion 21` and `Religion 24` must
-    appear here for the `chat` format on the real corpus.
-    """
+    stats_by_template: dict[MatchKey, TemplateStats],
+) -> list[MatchKey]:
+    """Groups whose P+ items had zero P- available (spec: "Plantilla sin
+    ningún ítem negativo"). Task 1.4: `Religion 21`/`Religion 24` must appear
+    here for the `chat` format on the real corpus (as one or two entries per
+    template, one per polarity present -- see `_match_key`)."""
     return sorted(
-        key for key, s in stats_by_template.items() if s.n_positive > 0 and s.n_negative_available == 0
+        (key for key, s in stats_by_template.items() if s.n_positive > 0 and s.n_negative_available == 0),
+        key=lambda k: tuple(str(x) for x in k),
     )
 
 

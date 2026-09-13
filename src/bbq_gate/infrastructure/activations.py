@@ -65,3 +65,30 @@ class QwenActivationExtractor:
         return [
             hs[0, -1, :].detach().float().cpu().numpy().astype(np.float16) for hs in hidden_states
         ]
+
+    @torch.no_grad()
+    def extract_layer0_mean_pooled(self, text: str) -> np.ndarray:
+        """Mean-pooled embedding-layer vector, over ALL tokens of `text`.
+
+        design.md D2 Addendum 6 / spec "Evaluación relativa a baselines
+        declarados": under `add_generation_prompt=True`, the LAST token of a
+        'chat'-format prompt is a fixed turn marker identical across every
+        item, so `extract(...)[0]` (layer 0 at the last token) is a constant
+        vector by construction and cannot serve as the embeddings baseline.
+        Mean-pooling over every token position fixes this.
+
+        This looks up the embedding table directly (`get_input_embeddings`)
+        instead of running a forward pass, which is both cheaper and a
+        stronger guarantee of the spec's "no ha atravesado ningún bloque del
+        modelo": no transformer block runs at all.
+
+        Returns:
+            One fp16 vector (embedding dimension), the mean over the token
+            axis. Promoted to float32 before the reduction (Addendum 6's
+            numeric note: large-magnitude fp16 values overflow on
+            accumulation).
+        """
+        encoded = self.tokenizer(text, return_tensors="pt").to(self.device)
+        embeddings = self.model.get_input_embeddings()(encoded["input_ids"])  # (1, seq, dim)
+        pooled = embeddings[0].float().mean(dim=0)  # promote before reducing over tokens
+        return pooled.detach().cpu().numpy().astype(np.float16)

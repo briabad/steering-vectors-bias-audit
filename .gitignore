@@ -23,7 +23,7 @@ htmlcov/
 .dmypy.json
 dmypy.json
 *.log
-
+dummy
 # ============================================
 # Entornos virtuales
 # ============================================

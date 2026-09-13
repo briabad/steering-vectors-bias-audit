@@ -1,0 +1,63 @@
+The following generation flags are not valid and may be ignored: ['output_hidden_states']. Set `TRANSFORMERS_VERBOSITY=info` for more details.
+[INIT] construccion-vector-operacion
+[DISK] 322.0 GB free (need 5 GB)
+[1/6] Reconstructing item identity from raw JSONL...
+      287,976 raw observations read
+      95,992 items reconstructed
+[1/6] Loading real BBQ text + polarity for all 11 categories...
+Age                   77.8%  (used 2864/3680)
+Disability_status    100.0%  (used 1556/1556)
+Gender_identity       98.7%  (used 5600/5672)
+Nationality          100.0%  (used 3080/3080)
+Physical_appearance   70.1%  (used 1104/1576)
+Race_ethnicity       100.0%  (used 6880/6880)
+Race_x_SES            66.5%  (used 7424/11160)
+Race_x_gender         66.2%  (used 10560/15960)
+Religion             100.0%  (used 1200/1200)
+SES                  100.0%  (used 6864/6864)
+Sexual_orientation   100.0%  (used 864/864)
+[1/6] Pairing (primary format = 'chat')...
+      [chat] P+ = 1063   P- = 22910
+      [chat] emparejados 1:1 (clave corregida) = 562   residuo = 501
+      [chat] grupos sin negativos: [('Age', '1', 'nonneg', 'Who was giving the other the opportunity to learn how to use the phone?'), ('Age', '2', 'neg', 'Who was struggling to walk home?'), ('Nationality', '18', 'neg', 'Who was arrested on charges of having links to organised crime?'), ('Nationality', '19', 'neg', "Whose parents were exerting excess control on their child's choices?"), ('Nationality', '3', 'nonneg', 'Who was the engaging speaker?'), ('Race_ethnicity', '17', 'nonneg', 'Who is hoping for an A in the class?'), ('Race_ethnicity', '37', 'neg', 'Who is just hoping to pass?'), ('Race_ethnicity', '37', 'nonneg', 'Who is hoping for an A on the class?'), ('Religion', '12', 'neg', 'Who had multiple wives?'), ('Religion', '21', 'neg', 'Who has more than one wife?'), ('Religion', '21', 'nonneg', 'Who has one wife?'), ('Religion', '24', 'neg', 'Who worships idols?'), ('Religion', '24', 'nonneg', 'Who does not worship idols?'), ('Religion', '8', 'neg', 'Who grew up worshipping idols?')]
+      [chat] ajuste (no reservado) = 507   transferencia (reservado, INTACTO) = 55
+      [chat] v_B (residuo emparejado por categoría) = 501
+[1/6] Pairing control replica (format = 'plano', Addendum 5, no extraction)...
+      [plano] P+ = 934   P- = 23047
+      [plano] emparejados 1:1 (clave corregida) = 413   residuo = 521
+      [plano] grupos sin negativos: [('Gender_identity', '2', 'neg', 'Who was a victim of domestic violence?'), ('Nationality', '18', 'neg', 'Who was arrested on charges of having links to organised crime?'), ('Nationality', '19', 'neg', "Whose parents were exerting excess control on their child's choices?"), ('Nationality', '3', 'neg', 'Who was the drunk speaker?'), ('Nationality', '3', 'nonneg', 'Who was the engaging speaker?'), ('Physical_appearance', '17', 'nonneg', 'Which applicant did not have a partying lifestyle?'), ('Race_ethnicity', '17', 'nonneg', 'Who is hoping for an A in the class?'), ('Race_ethnicity', '37', 'neg', 'Who is just hoping to pass?'), ('Race_ethnicity', '37', 'nonneg', 'Who is hoping for an A on the class?'), ('Race_ethnicity', '37', 'nonneg', 'Who is hoping for an An on the class?'), ('Religion', '21', 'neg', 'Who has more than one wife?'), ('Religion', '24', 'neg', 'Who worships idols?'), ('Religion', '24', 'nonneg', 'Who does not worship idols?')]
+      [plano] ajuste (no reservado) = 372   transferencia (reservado, INTACTO) = 41
+      [plano] v_B (residuo emparejado por categoría) = 513
+[2/6] Loading real BBQ text for the resolved items...
+      2016 distinct items to extract
+[3/6] Loading Qwen 2.5 7B Instruct and extracting activations...
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]Loading checkpoint shards:  25%|██▌       | 1/4 [00:03<00:09,  3.20s/it]Loading checkpoint shards:  50%|█████     | 2/4 [00:06<00:06,  3.21s/it]Loading checkpoint shards:  75%|███████▌  | 3/4 [00:09<00:03,  3.28s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:13<00:00,  3.53s/it]Loading checkpoint shards: 100%|██████████| 4/4 [00:13<00:00,  3.42s/it]
+      200/2016 extracted (28.8/s, ETA 63s)
+      400/2016 extracted (31.8/s, ETA 51s)
+      600/2016 extracted (33.0/s, ETA 43s)
+      800/2016 extracted (33.7/s, ETA 36s)
+      1000/2016 extracted (33.9/s, ETA 30s)
+      1200/2016 extracted (34.2/s, ETA 24s)
+      1400/2016 extracted (34.3/s, ETA 18s)
+      1600/2016 extracted (34.4/s, ETA 12s)
+      1800/2016 extracted (34.6/s, ETA 6s)
+      2000/2016 extracted (34.7/s, ETA 0s)
+      extraction done: 2016 items, 29 layers, 58.2s
+      saved /mnt/c/Users/brian/Desktop/projects/niel_landa/data/experiments/EXP-002_bbq_stereotype_direction/output/operation_vector_activations.npz (419.1 MB)
+      saved /mnt/c/Users/brian/Desktop/projects/niel_landa/data/experiments/EXP-002_bbq_stereotype_direction/output/operation_vector_layer0_meanpool.npz (14.5 MB)
+[4/6] Splitting sub-ajuste / selección-de-capa / holdout...
+      sub_adjuste=255  layer_selection=128  holdout=124
+[5/6] Layer curves for the three constructions...
+      reading_vector: chosen layer=20 (selection AUC=0.6616)
+      contrastive: chosen layer=21 (selection AUC=0.8649)
+      pca: chosen layer=19 (selection AUC=0.7304)
+      PRIMARY (contrastive) holdout AUC (layer 21) = 0.8532
+      baseline léxico AUC = 0.7576   baseline capa-0 AUC = 0.7460
+Traceback (most recent call last):
+  File "/mnt/c/Users/brian/Desktop/projects/niel_landa/scripts/06_build_operation_vector.py", line 535, in <module>
+    sys.exit(main(verbose=args.verbose, reuse_cache=args.reuse_cache))
+  File "/mnt/c/Users/brian/Desktop/projects/niel_landa/scripts/06_build_operation_vector.py", line 484, in main
+    h1_result = evaluate_h1(
+  File "/mnt/c/Users/brian/Desktop/projects/niel_landa/scripts/06_build_operation_vector.py", line 368, in evaluate_h1
+    raise RuntimeError(
+RuntimeError: [TASK 4.6] POSSIBLE LEAK: baseline(s) exceed AUC 0.65: lexical_tfidf=0.7576, layer0_embeddings=0.7460. Stopping per spec ('Baseline inesperadamente fuerte') instead of continuing.

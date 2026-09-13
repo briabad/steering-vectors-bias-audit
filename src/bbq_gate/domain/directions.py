@@ -198,6 +198,25 @@ def cosine(a: Vector, b: Vector) -> float:
     return float(np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b)))
 
 
+def vectors_are_constant(vectors: Sequence[Vector], atol: float = 1e-6) -> bool:
+    """True if every vector in `vectors` is (numerically) identical.
+
+    Spec "Baseline de embeddings no degenerado": "si resultara constante, el
+    sistema lo señala como baseline inválido en vez de reportarlo como
+    capacidad discriminativa nula". Used to catch the exact failure mode
+    diagnosed in `EXP-002/hypothesis.md` Addendum 6 -- under
+    `add_generation_prompt=True`, the LAST token of a 'chat'-format prompt is
+    a turn marker identical across every item, making layer 0 at that
+    position a constant vector and its AUC exactly 0.5 by construction, not
+    by absence of signal. Cast to float64 for the same overflow reason as
+    `normalize`/`cosine` (fp16 activations, task 3.3).
+    """
+    if len(vectors) < 2:
+        return False
+    arr = np.stack([np.asarray(v, dtype=np.float64) for v in vectors])
+    return bool(np.allclose(arr, arr[0], atol=atol))
+
+
 # --------------------------------------------------------------------------
 # AUC helper shared by permutation test, layer selection, and baselines
 # --------------------------------------------------------------------------
@@ -402,6 +421,89 @@ def bootstrap_auc_ci(
     lower_idx = int(alpha / 2 * len(values))
     upper_idx = min(int((1 - alpha / 2) * len(values)), len(values) - 1)
     return values[lower_idx], values[upper_idx]
+
+
+# --------------------------------------------------------------------------
+# Margin bootstrap (hypothesis.md Addendum 7, Revisions 1-2): replaces the
+# retired absolute BASELINE_LEAK_THRESHOLD gate with a check on whether the
+# margin of the direction over a baseline is distinguishable from zero.
+# --------------------------------------------------------------------------
+
+
+def bootstrap_margin_ci(
+    direction_pos_scores: Sequence[float],
+    direction_neg_scores: Sequence[float],
+    baseline_pos_scores: Sequence[float],
+    baseline_neg_scores: Sequence[float],
+    n_bootstrap: int = 1000,
+    confidence: float = 0.95,
+    seed: int | None = None,
+) -> tuple[float, float, float]:
+    """Bootstrap CI for margin = AUC(direction) - AUC(baseline) on the same
+    fixed holdout, resampling holdout PAIRS jointly for both AUCs.
+
+    Addendum 7, Revision 1: the pipeline used to abort on an absolute
+    baseline AUC threshold (0.65), which cannot tell a real lexical leak
+    (baseline ~= direction) apart from an expected, intrinsic lexical signal
+    (this contrast's behaviour genuinely depends on who is named). The
+    replacement asks the question that actually matters: is the direction's
+    advantage over the baseline distinguishable from sampling noise? Each
+    bootstrap replicate resamples a single set of pair indices ONCE and uses
+    it to recompute BOTH AUCs, so the margin reflects the SAME resampled
+    holdout rather than the difference of two independently-resampled AUCs
+    (which would overstate the interval's width).
+
+    Args:
+        direction_pos_scores / direction_neg_scores: per-pair scalar
+            projections of the fixed, already-selected direction on the
+            holdout positives / negatives (pair i in each array corresponds
+            to the same holdout pair).
+        baseline_pos_scores / baseline_neg_scores: per-pair scalar scores of
+            the fixed, already-fitted baseline model on the SAME holdout
+            pairs, same order.
+        n_bootstrap: number of resamples.
+        confidence: confidence level for the two-sided interval.
+        seed: RNG seed.
+
+    Returns:
+        (ci_lower, ci_upper, mean) of the margin distribution. All NaN if no
+        replicate produced a valid AUC (e.g. an empty holdout).
+    """
+    n = len(direction_pos_scores)
+    if not (n == len(direction_neg_scores) == len(baseline_pos_scores) == len(baseline_neg_scores)):
+        raise ValueError(
+            "direction_pos_scores, direction_neg_scores, baseline_pos_scores and "
+            "baseline_neg_scores must all have the same length (one holdout pair each)"
+        )
+    if n == 0:
+        return float("nan"), float("nan"), float("nan")
+
+    dps = np.asarray(direction_pos_scores, dtype=np.float64)
+    dns = np.asarray(direction_neg_scores, dtype=np.float64)
+    bps = np.asarray(baseline_pos_scores, dtype=np.float64)
+    bns = np.asarray(baseline_neg_scores, dtype=np.float64)
+    labels = np.concatenate([np.ones(n), np.zeros(n)])
+
+    rng = random.Random(seed)
+    margins = []
+    for _ in range(n_bootstrap):
+        idx = [rng.randrange(n) for _ in range(n)]
+        dir_scores = np.concatenate([dps[idx], dns[idx]])
+        base_scores = np.concatenate([bps[idx], bns[idx]])
+        try:
+            auc_dir = roc_auc_score(labels, dir_scores)
+            auc_base = roc_auc_score(labels, base_scores)
+        except ValueError:
+            continue  # degenerate resample (e.g. every score tied); skip
+        margins.append(auc_dir - auc_base)
+
+    if not margins:
+        return float("nan"), float("nan"), float("nan")
+    margins.sort()
+    alpha = 1 - confidence
+    lower_idx = int(alpha / 2 * len(margins))
+    upper_idx = min(int((1 - alpha / 2) * len(margins)), len(margins) - 1)
+    return margins[lower_idx], margins[upper_idx], float(np.mean(margins))
 
 
 # --------------------------------------------------------------------------

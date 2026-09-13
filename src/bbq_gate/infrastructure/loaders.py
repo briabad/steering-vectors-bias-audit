@@ -36,11 +36,15 @@ def _iter_bbq_category_rows(
     alias: dict[str, set[str]],
     stats: dict[str, int],
     ds: object,
-) -> Generator[tuple[BBQItem, str], None, None]:
-    """Shared row-by-row filtering logic, yielding (item, question_index) for
-    every row accepted into the analysis. `question_index` is BBQ's question
-    TEMPLATE number (used by `construccion-vector-operacion` to pair P+/P- by
-    category and template; see `bbq_gate.domain.contrast`), distinct from
+) -> Generator[tuple[BBQItem, str, str], None, None]:
+    """Shared row-by-row filtering logic, yielding (item, question_index,
+    question_polarity) for every row accepted into the analysis.
+    `question_index` is BBQ's question TEMPLATE number; `question_polarity`
+    is BBQ's own 'neg'/'nonneg' tag. Both are used by
+    `construccion-vector-operacion` to pair P+/P- by category, template AND
+    polarity (design.md D2, corrected 2026-09-06: pairing by template alone
+    lets a lexical classifier learn the polarity's opposite wording as a
+    label proxy -- see `bbq_gate.domain.contrast._match_key`), distinct from
     `example_id` (the per-row unique identifier, stored as `BBQItem.item_id`).
 
     Mutates `stats` in place as rows are consumed (this is a generator: the
@@ -127,7 +131,7 @@ def _iter_bbq_category_rows(
             continue
 
         stats["used"] += 1
-        yield item, row["question_index"]
+        yield item, row["question_index"], row["question_polarity"]
 
 
 def load_bbq_category(
@@ -154,7 +158,9 @@ def load_bbq_category(
     ds = load_dataset("oskarvanderwal/bbq", category)["test"]
     stats = {"total": 0, "used": 0, "missing_unknown": 0, "intersectional": 0, "no_match": 0}
 
-    items = [item for item, _question_index in _iter_bbq_category_rows(category, alias, stats, ds)]
+    items = [
+        item for item, _question_index, _question_polarity in _iter_bbq_category_rows(category, alias, stats, ds)
+    ]
 
     if verbose:
         coverage = 100 * stats["used"] / stats["total"] if stats["total"] > 0 else 0
@@ -167,16 +173,16 @@ def load_bbq_category_with_template_index(
     category: str,
     alias: dict[str, set[str]] | None = None,
     verbose: bool = False,
-) -> tuple[list[tuple[BBQItem, str]], dict[str, int]]:
+) -> tuple[list[tuple[BBQItem, str, str]], dict[str, int]]:
     """Same filtering as `load_bbq_category`, but also returns BBQ's
-    `question_index` (question template number) alongside each item, in the
-    SAME row order as `load_bbq_category` / `load_bbq_all_categories` would
-    produce.
+    `question_index` (question template number) and `question_polarity`
+    alongside each item, in the SAME row order as `load_bbq_category` /
+    `load_bbq_all_categories` would produce.
 
     Used by `construccion-vector-operacion`'s contrast builder to match the
     positionally-reconstructed identity recovered from the (defective)
-    `existence_gate_raw.jsonl` back to real item text -- see
-    `bbq_gate.application.contrast_builder` and design.md D1.
+    `existence_gate_raw.jsonl` back to real item text AND polarity -- see
+    `bbq_gate.application.contrast_builder` and design.md D1/D2.
     """
     if alias is None:
         alias = {}

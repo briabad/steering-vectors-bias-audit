@@ -63,6 +63,19 @@ class ConsolidatedItem:
         correct_majority: True if the majority of permutations answered
             correctly (matches `correct_position`).
         n_obs: Number of raw observations consolidated (always 3).
+        question_polarity: BBQ's `question_polarity` ('neg'/'nonneg') for this
+            item, or None if not yet resolved. NOT present in the raw JSONL
+            (design.md D2 Addendum 6): populated later, by position, from the
+            real BBQ dataset via `application.contrast_builder.
+            attach_polarity_and_text` -- required because the corrected
+            pairing key is `(categoría, question_index, question_polarity)`,
+            not `(categoría, question_index)` alone (343/343 templates
+            contain both polarities' opposite-worded questions).
+        question_text: The real question string for this item, or None if
+            not yet resolved. Used as a tie-breaker within the rare (1.0 %)
+            (category, template, polarity) groups that still contain more
+            than one distinct wording (spec: "Plantilla y polaridad no fijan
+            el enunciado").
     """
 
     category: str
@@ -74,6 +87,8 @@ class ConsolidatedItem:
     unstable: bool
     correct_majority: bool
     n_obs: int
+    question_polarity: str | None = None
+    question_text: str | None = None
 
 
 def _consolidate_one(obs: list[dict[str, Any]]) -> dict[str, Any]:

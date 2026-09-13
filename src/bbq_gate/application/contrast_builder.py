@@ -11,6 +11,7 @@ fast unit tests; the pure logic it calls (`domain.raw_reconstruction`,
 from __future__ import annotations
 
 import collections
+import dataclasses
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -25,7 +26,12 @@ from bbq_gate.infrastructure.loaders import BBQ_CATEGORIES, load_bbq_category_wi
 # the same set and order of real items.
 DEFAULT_ALIAS = {"f": {"woman", "girl", "female"}, "m": {"man", "boy", "male"}}
 
-RealItemIndex = dict[tuple[str, str, str], list[BBQItem]]
+# Each bucket holds (item, question_polarity) tuples, in the same
+# within-group order as the positionally-reconstructed `ConsolidatedItem`s
+# (design.md D1). Polarity is carried alongside real text because the
+# corrected pairing key (design.md D2 Addendum 6) needs it and the raw JSONL
+# does not persist it -- see `attach_polarity_and_text`.
+RealItemIndex = dict[tuple[str, str, str], list[tuple[BBQItem, str]]]
 
 
 def load_raw_rows(raw_path: Path) -> list[dict]:
@@ -66,13 +72,13 @@ def build_real_item_index(
         items_with_template, _stats = load_bbq_category_with_template_index(
             category, alias, verbose=verbose
         )
-        for item, template in items_with_template:
-            index[(item.category, item.context_condition, str(template))].append(item)
+        for item, template, polarity in items_with_template:
+            index[(item.category, item.context_condition, str(template))].append((item, polarity))
     return dict(index)
 
 
-def resolve_item(consolidated: ConsolidatedItem, real_index: RealItemIndex) -> BBQItem:
-    """Resolve one positionally-reconstructed item to its real BBQ text.
+def _resolve_candidate(consolidated: ConsolidatedItem, real_index: RealItemIndex) -> tuple[BBQItem, str]:
+    """Shared lookup used by `resolve_item` and `attach_polarity_and_text`.
 
     Raises:
         ValueError: if the (category, condition, template) group does not
@@ -93,6 +99,31 @@ def resolve_item(consolidated: ConsolidatedItem, real_index: RealItemIndex) -> B
             f"the resolution logic may have changed since the raw corpus was produced"
         )
     return candidates[consolidated.position]
+
+
+def resolve_item(consolidated: ConsolidatedItem, real_index: RealItemIndex) -> BBQItem:
+    """Resolve one positionally-reconstructed item to its real BBQ text."""
+    item, _polarity = _resolve_candidate(consolidated, real_index)
+    return item
+
+
+def attach_polarity_and_text(
+    items: list[ConsolidatedItem], real_index: RealItemIndex
+) -> list[ConsolidatedItem]:
+    """Enrich each `ConsolidatedItem` with its real `question_polarity` and
+    `question_text`, resolved positionally (design.md D2 Addendum 6).
+
+    Must run BEFORE `domain.contrast.match_pairs_by_template`, whose
+    corrected grouping key requires these two fields (raw JSONL rows never
+    carried polarity -- see `ConsolidatedItem`'s docstring).
+    """
+    enriched = []
+    for it in items:
+        real_item, polarity = _resolve_candidate(it, real_index)
+        enriched.append(
+            dataclasses.replace(it, question_polarity=polarity, question_text=real_item.question)
+        )
+    return enriched
 
 
 @dataclass(frozen=True)

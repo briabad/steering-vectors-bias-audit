@@ -1,0 +1,57 @@
+[INIT] construccion-vector-operacion
+[DISK] 322.0 GB free (need 5 GB)
+[1/6] Reconstructing item identity from raw JSONL...
+      287,976 raw observations read
+      95,992 items reconstructed
+[1/6] Loading real BBQ text + polarity for all 11 categories...
+Age                   77.8%  (used 2864/3680)
+Disability_status    100.0%  (used 1556/1556)
+Gender_identity       98.7%  (used 5600/5672)
+Nationality          100.0%  (used 3080/3080)
+Physical_appearance   70.1%  (used 1104/1576)
+Race_ethnicity       100.0%  (used 6880/6880)
+Race_x_SES            66.5%  (used 7424/11160)
+Race_x_gender         66.2%  (used 10560/15960)
+Religion             100.0%  (used 1200/1200)
+SES                  100.0%  (used 6864/6864)
+Sexual_orientation   100.0%  (used 864/864)
+[1/6] Pairing (primary format = 'chat')...
+      [chat] P+ = 1063   P- = 22910
+      [chat] emparejados 1:1 (clave corregida) = 562   residuo = 501
+      [chat] grupos sin negativos: [('Age', '1', 'nonneg', 'Who was giving the other the opportunity to learn how to use the phone?'), ('Age', '2', 'neg', 'Who was struggling to walk home?'), ('Nationality', '18', 'neg', 'Who was arrested on charges of having links to organised crime?'), ('Nationality', '19', 'neg', "Whose parents were exerting excess control on their child's choices?"), ('Nationality', '3', 'nonneg', 'Who was the engaging speaker?'), ('Race_ethnicity', '17', 'nonneg', 'Who is hoping for an A in the class?'), ('Race_ethnicity', '37', 'neg', 'Who is just hoping to pass?'), ('Race_ethnicity', '37', 'nonneg', 'Who is hoping for an A on the class?'), ('Religion', '12', 'neg', 'Who had multiple wives?'), ('Religion', '21', 'neg', 'Who has more than one wife?'), ('Religion', '21', 'nonneg', 'Who has one wife?'), ('Religion', '24', 'neg', 'Who worships idols?'), ('Religion', '24', 'nonneg', 'Who does not worship idols?'), ('Religion', '8', 'neg', 'Who grew up worshipping idols?')]
+      [chat] ajuste (no reservado) = 507   transferencia (reservado, INTACTO) = 55
+      [chat] v_B (residuo emparejado por categoría) = 501
+      [chat] conjunto de trabajo FUSIONADO (Addendum 5/7, protocolo del residuo -> 'fusionar') = 507 (clave estricta, no reservado) + 501 (residuo por categoría) = 1008
+[1/6] Pairing control replica (format = 'plano', Addendum 5, no extraction)...
+      [plano] P+ = 934   P- = 23047
+      [plano] emparejados 1:1 (clave corregida) = 413   residuo = 521
+      [plano] grupos sin negativos: [('Gender_identity', '2', 'neg', 'Who was a victim of domestic violence?'), ('Nationality', '18', 'neg', 'Who was arrested on charges of having links to organised crime?'), ('Nationality', '19', 'neg', "Whose parents were exerting excess control on their child's choices?"), ('Nationality', '3', 'neg', 'Who was the drunk speaker?'), ('Nationality', '3', 'nonneg', 'Who was the engaging speaker?'), ('Physical_appearance', '17', 'nonneg', 'Which applicant did not have a partying lifestyle?'), ('Race_ethnicity', '17', 'nonneg', 'Who is hoping for an A in the class?'), ('Race_ethnicity', '37', 'neg', 'Who is just hoping to pass?'), ('Race_ethnicity', '37', 'nonneg', 'Who is hoping for an A on the class?'), ('Race_ethnicity', '37', 'nonneg', 'Who is hoping for an An on the class?'), ('Religion', '21', 'neg', 'Who has more than one wife?'), ('Religion', '24', 'neg', 'Who worships idols?'), ('Religion', '24', 'nonneg', 'Who does not worship idols?')]
+      [plano] ajuste (no reservado) = 372   transferencia (reservado, INTACTO) = 41
+      [plano] v_B (residuo emparejado por categoría) = 513
+      [plano] conjunto de trabajo FUSIONADO (Addendum 5/7, protocolo del residuo -> 'fusionar') = 372 (clave estricta, no reservado) + 513 (residuo por categoría) = 885
+[FUSION] Addendum 5/7 protocolo del residuo -> 'fusionar': conjunto de trabajo = 507 (v_A, clave estricta) + 501 (v_B, residuo por categoría) = 1008 pares no reservados
+[2/6] Loading real BBQ text for the resolved items...
+      2016 distinct items to extract
+[3/6] Reusing cached activations from /mnt/c/Users/brian/Desktop/projects/niel_landa/data/experiments/EXP-002_bbq_stereotype_direction/output/operation_vector_activations.npz and /mnt/c/Users/brian/Desktop/projects/niel_landa/data/experiments/EXP-002_bbq_stereotype_direction/output/operation_vector_layer0_meanpool.npz
+[4/6] Splitting sub-ajuste / selección-de-capa / holdout...
+      sub_adjuste=506  layer_selection=253  holdout=249
+[5/6] Layer curves for the three constructions...
+      reading_vector: chosen layer=20 (selection AUC=0.8000)
+      contrastive: chosen layer=21 (selection AUC=0.9348)
+      pca: chosen layer=19 (selection AUC=0.8788)
+      PRIMARY (contrastive) holdout AUC (layer 21) = 0.9455
+      baseline léxico AUC = 0.8870   baseline capa-0 AUC = 0.7541
+      [INFO] (no gate, retired Addendum 7 Rev.1) baseline(s) above the old absolute threshold 0.65: lexical_tfidf=0.8870, layer0_embeddings=0.7541 -- decision uses the margin gate below
+      margen dirección - léxico = +0.0592  IC95%=[+0.0364, +0.0817]
+      margen dirección - capa0  = +0.1915  IC95%=[+0.1596, +0.2252]
+      mejor baseline (más difícil de batir) = lexical_tfidf (AUC=0.8870)  margen IC95%=[+0.0364, +0.0817]
+[6/6] Permutation test, Cohen's d, bootstrap CI...
+      p=0.0010  d=2.3278  AUC 95% CI=[0.9256, 0.9603]
+      [reading_vector] layer=20  holdout AUC=0.8052 (non-primary, reported for completeness)
+      [pca] layer=19  holdout AUC=0.8849 (non-primary, reported for completeness)
+[residue] Building v_A / v_B and anchors...
+      cos(v_A, v_B) = 0.9199  floor~-0.0009  ceiling~0.9667
+      recomendación: fusionar
+
+[SAVE] /mnt/c/Users/brian/Desktop/projects/niel_landa/data/experiments/EXP-002_bbq_stereotype_direction/output/operation_vector.json
+[DONE] total runtime: 0.6 min

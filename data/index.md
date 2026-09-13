@@ -40,7 +40,8 @@
 | SOA-004 | Højer et al.: extracción en último token, tres construcciones de vector de control, aplicación en capa media, validación por KL/entropía/probabilidad. | Alta — es el mecanismo operativo | [references/SOA-004_representation_engineering.md](references/SOA-004_representation_engineering.md) |
 | SOA-005 | Helff et al. (AR): conceptos como tuplas (nombre, representación, umbral) y reglas lógicas encima; no hay SAE para Qwen 7B. | Alta — capa de explicabilidad y guardarraíl | [references/SOA-005_activation_reasoning.md](references/SOA-005_activation_reasoning.md) |
 | SOA-006 | Zhou et al.: razonamiento como flujo sobre pasos; curvatura de Menger, válida en cualquier dimensión. | Alta — fija el eje t y arregla la curvatura | [references/SOA-006_geometry_of_reasoning.md](references/SOA-006_geometry_of_reasoning.md) |
-| _(pendiente — sin destilar: `persona_vector.pdf`, `lapo.pdf`, `owls_like_numbers.pdf`, `2026.findings-acl.707.pdf`, `2604.28192v3.pdf`, `NeurIPS-2025-consistent-paths…`)_ | | | |
+| SOA-007 | Chen et al.: persona vectors en Qwen2.5-7B-Instruct con la misma intervención aditiva; la proyección previa a generar predice el rasgo (r 0.75–0.83), pero sobre todo entre tipos de prompt. | Alta — mismo modelo; capa elegida por efectividad causal y límite de la monitorización por proyección | [references/SOA-007_persona_vectors.md](references/SOA-007_persona_vectors.md) |
+| _(pendiente — sin destilar: `lapo.pdf`, `owls_like_numbers.pdf`, `2026.findings-acl.707.pdf`, `2604.28192v3.pdf`, `NeurIPS-2025-consistent-paths…`)_ | | | |
 
 ---
 

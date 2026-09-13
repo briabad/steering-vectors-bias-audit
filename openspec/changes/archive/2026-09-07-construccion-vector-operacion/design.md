@@ -48,11 +48,33 @@ conserva el defecto**. La identidad se reconstruye por posición, con verificaci
 ciclo de permutaciones que aborta si el patrón no se cumple — el mismo mecanismo que
 `scripts/05_recompute_gate.py`, que debe reutilizarse en lugar de reimplementarse.
 
-### D2 — Emparejamiento por plantilla, no solo por categoría
+### D2 — Emparejamiento por categoría, plantilla **y polaridad**
 
-`question_index` agrupa ítems que comparten pregunta y estructura sintáctica, variando
-solo las personas nombradas. Emparejar dentro de la plantilla controla **a la vez** la
-categoría y el vocabulario.
+> **Corregido el 2026-09-06 tras el aborto por fuga.** La versión original de esta
+> decisión emparejaba por `(categoría, question_index)` afirmando que eso controlaba el
+> vocabulario de la pregunta. **Era falso**: las 343 plantillas del corpus, sin
+> excepción, contienen los dos textos de pregunta correspondientes a las polaridades
+> `neg` y `nonneg`, que son preguntas opuestas. Con esa clave un TF-IDF alcanzó AUC
+> 0.9079 frente a 0.9174 de la dirección, y la tarea 4.6 abortó. Ver
+> `EXP-002/hypothesis.md` Addendum 6.
+
+La clave es `(categoría, question_index, question_polarity)`. Deja solo 7 de 686 grupos
+(1.0 %) con más de un texto de pregunta; para ese residuo se exige además **texto de
+pregunta idéntico**.
+
+Emparejar así controla la categoría **y** la redacción de la pregunta. Coste medido:
+564 pares en `chat` (frente a 752 con la clave defectuosa) y 413 en `plano`.
+
+**Lo que sigue sin controlar, declarado**: el contexto difiere en las personas nombradas
+—*"un nieto y su abuelo"* vs *"una abuela y su nieta"*—. Un baseline léxico puede
+aprender qué parejas hacen que el modelo adivine, y eso es intrínseco: la conducta del
+modelo depende de a quién se nombra. La expectativa registrada es que el baseline baje
+sustancialmente pero no a 0.5, y que C2 se juzgue por el **margen**, no por su valor
+absoluto.
+
+*Alternativa considerada:* estratificación proporcional por categoría. Descartada: iguala
+la mezcla temática pero no el vocabulario, y la categoría más escasa la limitaría a 176
+ítems por lado.
 
 *Alternativa considerada:* estratificación proporcional por categoría. Descartada: iguala
 la mezcla temática pero no el vocabulario, y la categoría más escasa la limitaría a 176

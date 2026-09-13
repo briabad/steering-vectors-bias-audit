@@ -28,3 +28,14 @@ class ActivationExtractor(Protocol):
             of the LAST token of `text`.
         """
         ...
+
+    def extract_layer0_mean_pooled(self, text: str) -> np.ndarray:
+        """Embedding-layer vector, mean-pooled over ALL tokens of `text`.
+
+        Used only for the embeddings baseline (design.md D2 Addendum 6,
+        spec "Evaluación relativa a baselines declarados"): the last-token
+        position degenerates to a constant under a chat template's fixed
+        turn marker, so this baseline specifically requires whole-prompt
+        pooling instead.
+        """
+        ...

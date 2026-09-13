@@ -6,11 +6,25 @@ contraste por encima de baselines declarados, sin modificar los pesos del modelo
 
 ## ADDED Requirements
 
-### Requirement: Contraste emparejado 1:1 por categoría y plantilla
+### Requirement: Contraste emparejado 1:1 con el enunciado controlado
 
 El sistema SHALL emparejar cada ítem del conjunto positivo con exactamente un ítem del
-conjunto negativo que comparta **categoría y plantilla**, y SHALL descartar los ítems
-negativos no emparejados.
+conjunto negativo que comparta **categoría, plantilla y polaridad de la pregunta**, de
+modo que ambos miembros del par presenten **el mismo enunciado**, y SHALL descartar los
+ítems negativos no emparejados.
+
+Compartir plantilla no basta: una misma plantilla contiene los enunciados de ambas
+polaridades, que son preguntas opuestas con vocabulario distinto. Emparejar sin controlar
+la polaridad permite que un clasificador léxico aprenda el enunciado como sustituto de la
+etiqueta.
+
+#### Scenario: Enunciados opuestos dentro de la misma plantilla
+- **WHEN** dos ítems comparten categoría y plantilla pero difieren en polaridad
+- **THEN** el sistema NO los empareja entre sí
+
+#### Scenario: Plantilla y polaridad no fijan el enunciado
+- **WHEN** un grupo de categoría, plantilla y polaridad contiene más de un enunciado
+- **THEN** el emparejamiento exige además que el enunciado sea idéntico
 
 La composición de los dos conjuntos debe quedar igualada **por construcción**, no por
 muestreo. Un contraste sin emparejar reproduce el desequilibrio de $\rho_{\text{unk}}$
@@ -101,6 +115,17 @@ cifra absoluta como evidencia por sí sola.
 
 La capa de embeddings no ha atravesado ningún bloque del modelo: si una capa intermedia
 no la supera, la separación no involucra cómputo del modelo.
+
+El baseline de embeddings SHALL calcularse con **agregación sobre todos los tokens del
+prompt**, no sobre la última posición. Bajo una plantilla de conversación el último token
+es un marcador de turno idéntico en todos los ejemplos, lo que haría el baseline
+constante y por tanto vacuo por construcción.
+
+#### Scenario: Baseline de embeddings no degenerado
+- **WHEN** se calcula el baseline de la capa de embeddings
+- **THEN** su valor varía entre ejemplos
+- **AND** si resultara constante, el sistema lo señala como baseline inválido en vez de
+  reportarlo como capacidad discriminativa nula
 
 #### Scenario: Comparación obligatoria
 - **WHEN** se reporta la capacidad discriminativa de la dirección

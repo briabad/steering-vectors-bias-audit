@@ -138,15 +138,60 @@ class BaselineCheck:
 
 
 def check_baselines_for_leakage(baselines: dict[str, float]) -> list[BaselineCheck]:
-    """Task 4.6: evaluate every declared baseline against the leak threshold.
+    """Task 4.6 (ORIGINAL, retired as a gate -- see `MarginCheck` below):
+    evaluate every declared baseline against the fixed absolute leak
+    threshold.
+
+    Kept for its own regression test coverage and as a diagnostic print in
+    the pipeline (`scripts/06_build_operation_vector.py`), but no longer used
+    to abort the pipeline: `EXP-002/hypothesis.md` Addendum 7, Revision 1,
+    found the absolute threshold could not distinguish a real lexical leak
+    (baseline ~= direction, e.g. 0.9079 vs 0.9174) from an intrinsic, expected
+    lexical signal for this contrast (baseline 0.7576, direction 0.8532 --
+    the model's behaviour genuinely depends on who is named). The pipeline's
+    actual gate is `best_baseline_margin_check`.
 
     Returns:
         The list of `BaselineCheck`s that are possible leaks (empty if none).
-        Callers MUST stop and report, not continue, if this is non-empty
-        (spec: "Baseline inesperadamente fuerte").
     """
     return [
         BaselineCheck(name=name, auc=auc)
         for name, auc in baselines.items()
         if auc > BASELINE_LEAK_THRESHOLD
     ]
+
+
+@dataclass(frozen=True)
+class MarginCheck:
+    """`EXP-002/hypothesis.md` Addendum 7 (Revisions 1-2): the margin of the
+    direction's holdout AUC over ONE baseline's holdout AUC, with a 95%
+    bootstrap CI obtained by resampling holdout pairs jointly for both AUCs
+    (`domain.directions.bootstrap_margin_ci`). This is the pipeline's actual
+    abort gate, replacing the retired absolute `BASELINE_LEAK_THRESHOLD`.
+    """
+
+    baseline_name: str
+    baseline_auc: float
+    margin_mean: float
+    margin_ci_lower: float
+    margin_ci_upper: float
+
+    @property
+    def excludes_zero(self) -> bool:
+        """True if the margin's 95% CI does not straddle 0 -- i.e. the
+        direction's advantage over this baseline is distinguishable from
+        sampling noise at this holdout size."""
+        return self.margin_ci_lower > 0.0 or self.margin_ci_upper < 0.0
+
+
+def best_baseline_margin_check(checks: Sequence[MarginCheck]) -> MarginCheck:
+    """Pick the 'mejor baseline' for the abort gate: the one HARDEST to
+    beat, i.e. the one with the SMALLEST margin (a smaller margin means a
+    stronger, more competitive baseline). Gating on the smallest margin is
+    the conservative choice -- if the direction clears its toughest
+    baseline with a margin distinguishable from zero, it clears the rest
+    too.
+    """
+    if not checks:
+        raise ValueError("best_baseline_margin_check requires at least one MarginCheck")
+    return min(checks, key=lambda c: c.margin_mean)
